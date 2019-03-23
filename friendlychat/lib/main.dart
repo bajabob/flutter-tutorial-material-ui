@@ -10,7 +10,7 @@ class FriendlychatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: "Friendlychat",
+      title: "Tutorial III",
       home: new ChatScreen(),
     );
   }
@@ -21,9 +21,16 @@ class ChatScreen extends StatefulWidget {
   State createState() => new ChatScreenState();
 }
 
-class ChatScreenState extends State<ChatScreen> {
+class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final List<ChatMessage> _messages = <ChatMessage>[];
   final TextEditingController _textController = new TextEditingController();
+
+  @override
+  void dispose() {
+    for (ChatMessage message in _messages)
+      message.animationController.dispose();
+    super.dispose();
+  }
 
   Widget _buildTextComposer() {
     return new IconTheme(
@@ -56,10 +63,13 @@ class ChatScreenState extends State<ChatScreen> {
     _textController.clear();
     ChatMessage message = new ChatMessage(
       text: text,
+      animationController: new AnimationController(
+          vsync: this, duration: new Duration(milliseconds: 700)),
     );
     setState(() {
       _messages.insert(0, message);
     });
+    message.animationController.forward();
   }
 
   Widget build(BuildContext context) {
@@ -87,33 +97,64 @@ class ChatScreenState extends State<ChatScreen> {
 }
 
 class ChatMessage extends StatelessWidget {
-  ChatMessage({this.text});
+  ChatMessage({this.text, this.animationController});
 
   final String text;
+  final AnimationController animationController;
 
   @override
   Widget build(BuildContext context) {
-    return new Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0),
-      child: new Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          new Container(
-            margin: const EdgeInsets.only(right: 16.0),
-            child: new CircleAvatar(child: new Text(_name[0])),
-          ),
-          new Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              new Text(_name, style: Theme.of(context).textTheme.subhead),
-              new Container(
-                margin: const EdgeInsets.only(top: 5.0),
-                child: new Text(text),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return new SizeTransition(
+      //new
+      sizeFactor: new CurvedAnimation(
+          //new
+          parent: animationController,
+          curve: Curves.easeOut), //new
+      axisAlignment: 0.0, //new
+      child: Row(mainAxisAlignment: MainAxisAlignment.start,
+          //this will determine if the message should be displayed left or right
+          children: [
+            Flexible(
+              //Wrapping the container with flexible widget
+              child: Container(
+                  padding: EdgeInsets.all(8.0),
+                  margin: EdgeInsets.all(4.0),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.all(Radius.circular(8.0))),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Flexible(
+                          //We only want to wrap the text message with flexible widget
+                          child: Container(
+                              child: Text(
+                        text,
+                      ))),
+                      SizedBox(
+                        width: 8.0,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          "12:00",
+                          style: TextStyle(fontSize: 10.0, color: Colors.grey),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8.0,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          _name,
+                          style: TextStyle(fontSize: 10.0, color: Colors.grey),
+                        ),
+                      ),
+                    ],
+                  )),
+            )
+          ]),
     );
   }
 }
